@@ -95,12 +95,12 @@ public class BankLoanController(IMapper mapper, IBankLoanService bankLoanService
   [ProducesResponseType(StatusCodes.Status401Unauthorized)]
   [ProducesResponseType(StatusCodes.Status404NotFound)]
   [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-  public IActionResult GetPendingBankLoans(Guid superUserId)
+  public IAsyncEnumerable<BankLoansResult> GetPendingBankLoans(Guid superUserId)
   {
     var bankLoans = _bankLoanService.GetPendingBankLoans(superUserId)
       .Select(bankLoan => _mapper.Map<BankLoansResult>(bankLoan));
 
-    return Ok(bankLoans);
+    return bankLoans;
   }
 
   [HttpGet]
