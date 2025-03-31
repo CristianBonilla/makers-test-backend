@@ -4,19 +4,19 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using Makers.Dev.Domain.Helpers.Extensions;
 
-namespace Makers.Dev.Domain.Helpers;
+namespace Makers.Dev.Domain.Helpers.Json;
 
-public class JsonPropertiesInclusionResolver<TObject>(params Expression<Func<TObject, object>>[] includedProperties) : CamelCasePropertyNamesContractResolver where TObject : class
+public class JsonPropertiesOmissionResolver<TObject>(params Expression<Func<TObject, object>>[] omittedProperties) : CamelCasePropertyNamesContractResolver where TObject : class
 {
-  readonly Expression<Func<TObject, object>>[] _includedProperties = includedProperties;
+  readonly Expression<Func<TObject, object>>[] _omittedProperties = omittedProperties;
 
-  public IContractResolver Instance => new JsonPropertiesInclusionResolver<TObject>(_includedProperties);
+  public IContractResolver Instance => new JsonPropertiesOmissionResolver<TObject>(_omittedProperties);
 
   protected override JsonProperty CreateProperty(MemberInfo member, MemberSerialization memberSerialization)
   {
     JsonProperty jsonProperty = base.CreateProperty(member, memberSerialization);
     PropertyInfo property = (PropertyInfo)member;
-    if (!_includedProperties.IsIncludedProperty(property))
+    if (_omittedProperties.IsIncludedProperty(property))
     {
       jsonProperty.ShouldSerialize = _ => false;
       jsonProperty.ShouldDeserialize = _ => false;
