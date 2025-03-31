@@ -1,4 +1,4 @@
-using Makers.Dev.Contracts.DTO.Auth;
+using Makers.Dev.Contracts.DTO.Role;
 using Makers.Dev.Contracts.SeedData;
 using Makers.Dev.Domain.Entities.Auth;
 using Makers.Dev.Domain.Helpers;

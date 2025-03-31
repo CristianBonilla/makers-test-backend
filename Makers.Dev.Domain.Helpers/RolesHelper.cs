@@ -1,4 +1,4 @@
-using Makers.Dev.Contracts.DTO.Auth;
+using Makers.Dev.Contracts.DTO.Role;
 
 namespace Makers.Dev.Domain.Helpers;
 
