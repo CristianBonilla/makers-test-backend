@@ -35,11 +35,16 @@
       "commandName": "Docker",
       "launchUrl": "{Scheme}://{ServiceHost}:{ServicePort}",
       "environmentVariables": {
-        "ASPNETCORE_HTTPS_PORTS": "8081",
-        "ASPNETCORE_HTTP_PORTS": "8080"
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ASPNETCORE_URLS": "https://+:408;http://+:386",
+        "ASPNETCORE_HTTPS_PORTS": "22017",
+        "ASPNETCORE_HTTP_PORTS": "21157",
+        "PROCESS_TYPE": "docker"
       },
       "publishAllPorts": true,
-      "useSSL": true
+      "httpPort": 21157,
+      "useSSL": true,
+      "sslPort": 22017
     },
     "WSL": {
       "commandName": "WSL2",
