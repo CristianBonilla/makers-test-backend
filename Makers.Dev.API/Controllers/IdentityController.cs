@@ -41,6 +41,7 @@ public class IdentityController(IMapper mapper, IAuthService authService, IAuthI
   [HttpPost("login")]
   [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(AuthResult))]
   [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+  [ProducesResponseType(StatusCodes.Status404NotFound)]
   [ProducesResponseType(StatusCodes.Status500InternalServerError)]
   public async Task<IActionResult> Login([FromBody] UserLoginRequest userLoginRequest)
   {
@@ -52,6 +53,7 @@ public class IdentityController(IMapper mapper, IAuthService authService, IAuthI
   [HttpPut("{userId}")]
   [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UserResponse))]
   [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+  [ProducesResponseType(StatusCodes.Status404NotFound)]
   [ProducesResponseType(StatusCodes.Status500InternalServerError)]
   public async Task<IActionResult> UpdateUser(Guid userId, [FromBody] UserRegisterRequest userRegisterRequest)
   {
@@ -64,6 +66,7 @@ public class IdentityController(IMapper mapper, IAuthService authService, IAuthI
 
   [HttpDelete("{userId}")]
   [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UserResponse))]
+  [ProducesResponseType(StatusCodes.Status401Unauthorized)]
   [ProducesResponseType(StatusCodes.Status404NotFound)]
   [ProducesResponseType(StatusCodes.Status500InternalServerError)]
   public async Task<IActionResult> DeleteUser(Guid userId)
@@ -75,6 +78,7 @@ public class IdentityController(IMapper mapper, IAuthService authService, IAuthI
 
   [HttpGet]
   [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IAsyncEnumerable<RoleResult>))]
+  [ProducesResponseType(StatusCodes.Status401Unauthorized)]
   [ProducesResponseType(StatusCodes.Status500InternalServerError)]
   public IAsyncEnumerable<RoleResult> GetUsers()
   {
@@ -85,6 +89,7 @@ public class IdentityController(IMapper mapper, IAuthService authService, IAuthI
 
   [HttpGet("{userId:guid}")]
   [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UserResponse))]
+  [ProducesResponseType(StatusCodes.Status401Unauthorized)]
   [ProducesResponseType(StatusCodes.Status404NotFound)]
   [ProducesResponseType(StatusCodes.Status500InternalServerError)]
   public async Task<IActionResult> FindUserById(Guid userId)
@@ -96,6 +101,7 @@ public class IdentityController(IMapper mapper, IAuthService authService, IAuthI
 
   [HttpGet("{usernameOrEmail}")]
   [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UserResponse))]
+  [ProducesResponseType(StatusCodes.Status401Unauthorized)]
   [ProducesResponseType(StatusCodes.Status404NotFound)]
   [ProducesResponseType(StatusCodes.Status500InternalServerError)]
   public async Task<IActionResult> FindUserByUsernameOrEmail(string usernameOrEmail)
