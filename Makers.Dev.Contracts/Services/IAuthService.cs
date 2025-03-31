@@ -11,4 +11,5 @@ public interface IAuthService
   Task<UserEntity> FindUserById(Guid userId);
   Task<UserEntity> FindUserByUsernameOrEmail(string usernameOrEmail);
   Task<bool> UserExists(UserEntity user);
+  Task<RoleEntity> FindRoleById(Guid roleId);
 }

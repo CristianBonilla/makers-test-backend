@@ -83,6 +83,8 @@ public class AuthService(
 
   public Task<bool> UserExists(UserEntity user) => Task.FromResult(UserExists(user, null));
 
+  public Task<RoleEntity> FindRoleById(Guid roleId) => Task.FromResult(GetRoleById(roleId));
+
   private static void UpdateUserPassword(ref UserEntity user)
   {
     var (password, salt) = HashPasswordHelper.Create(user.Password);
@@ -118,6 +120,13 @@ public class AuthService(
     UserEntity user = _userRepository.Find([userId]) ?? throw UserExceptionHelper.NotFound(userId);
 
     return user;
+  }
+
+  private RoleEntity GetRoleById(Guid roleId)
+  {
+    RoleEntity role = _roleRepository.Find([roleId]) ?? throw RoleExceptionHelper.NotFound(roleId);
+
+    return role;
   }
 
   private bool UserExists(UserEntity user, Expression<Func<UserEntity, bool>>? filter)

@@ -2,7 +2,6 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Microsoft.IdentityModel.Tokens;
 using AutoMapper;
-using Newtonsoft.Json;
 using Makers.Dev.API.Options;
 using Makers.Dev.Contracts.DTO.Auth;
 using Makers.Dev.Contracts.DTO.User;
@@ -11,6 +10,8 @@ using Makers.Dev.Contracts.Services;
 using Makers.Dev.Domain.Entities.Auth;
 using Makers.Dev.Domain.Helpers;
 using Makers.Dev.Domain.Helpers.Exceptions;
+using Makers.Dev.Domain.Helpers.Json;
+using Makers.Dev.Contracts.DTO.Role;
 
 namespace Makers.Dev.API.Identity;
 
@@ -30,8 +31,9 @@ class AuthIdentity(
       throw AuthExceptionHelper.Unauthorized(userRegisterRequest);
     UserEntity user = _mapper.Map<UserEntity>(userRegisterRequest);
     UserEntity addedUser = await _authService.AddUser(user);
+    RoleEntity role = await _authService.FindRoleById(user.RoleId);
 
-    return GenerateAuthForUser(addedUser);
+    return GenerateAuthForUser(addedUser, role);
   }
 
   public async Task<AuthResult> Login(UserLoginRequest userLoginRequest)
@@ -40,13 +42,14 @@ class AuthIdentity(
     bool userValidPassoword = HashPasswordHelper.Verify(userLoginRequest.Password, user.Password, user.Salt);
     if (!userValidPassoword)
       throw AuthExceptionHelper.Unauthorized(userLoginRequest.Password);
+    RoleEntity role = await _authService.FindRoleById(user.RoleId);
 
-    return GenerateAuthForUser(user);
+    return GenerateAuthForUser(user, role);
   }
 
   public async Task<bool> UserExists(UserRegisterRequest userRegisterRequest) => await _authService.UserExists(_mapper.Map<UserEntity>(userRegisterRequest));
 
-  private AuthResult GenerateAuthForUser(UserEntity user)
+  private AuthResult GenerateAuthForUser(UserEntity user, RoleEntity role)
   {
     JwtSecurityTokenHandler tokenHandler = new();
     byte[] secretKey = JwtSigningKeyHelper.GetSecretKey(_jwtOptions.Secret, 512);
@@ -58,34 +61,38 @@ class AuthIdentity(
         new(JwtRegisteredClaimNames.Email, user.Email),
         new(JwtRegisteredClaimNames.NameId, user.UserId.ToString()),
         new(ClaimTypes.NameIdentifier, user.Username),
-        new(ClaimTypes.UserData, UserToJson(user))
+        new(ClaimTypes.UserData, UserToJson(user)),
+        new(ClaimTypes.Role, RoleToJson(role))
       ]),
       Expires = DateTime.UtcNow.AddDays(_jwtOptions.ExpiresInDays),
       SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(secretKey), SecurityAlgorithms.HmacSha512Signature)
     };
     SecurityToken token = tokenHandler.CreateToken(tokenDescriptor);
 
-    return new(tokenHandler.WriteToken(token), _mapper.Map<UserResponse>(user));
+    return new(tokenHandler.WriteToken(token), _mapper.Map<UserResponse>(user), _mapper.Map<RoleResponse>(role));
   }
 
   private static string UserToJson(UserEntity user)
   {
-    string userJson = JsonConvert.SerializeObject(user, Formatting.None, new JsonSerializerSettings
-    {
-      ContractResolver = new JsonPropertiesInclusionResolver<UserEntity>(
-        user => user.RoleId,
-        user => user.DocumentNumber,
-        user => user.Mobile,
-        user => user.Username,
-        user => user.Email,
-        user => user.Firstname,
-        user => user.Lastname,
-        user => user.IsActive,
-        user => user.Created),
-      DefaultValueHandling = DefaultValueHandling.Ignore,
-      NullValueHandling = NullValueHandling.Ignore
-    });
+    string userJson = JsonHelper.ObjectToJson(
+      user,
+      user => user.UserId,
+      user => user.Password,
+      user => user.Salt,
+      user => user.Version,
+      user => user.Role,
+      user => user.BankLoans);
 
     return userJson;
+  }
+
+  private static string RoleToJson(RoleEntity role)
+  {
+    string roleJson = JsonHelper.ObjectToJson(
+      role,
+      role => role.Version,
+      role => role.Users);
+
+    return roleJson;
   }
 }
