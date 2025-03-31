@@ -15,8 +15,6 @@ class CommonInstaller : IInstaller
     services.AddMvc(options => options.Filters.Add<ServiceErrorExceptionFilterAttribute>());
     services.AddControllers()
       .AddNewtonsoftJson(JsonSerializer);
-    // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-    // services.AddEndpointsApiExplorer();
     services.AddApiVersioning(options =>
     {
       options.DefaultApiVersion = new ApiVersion(1, 0);
@@ -33,7 +31,8 @@ class CommonInstaller : IInstaller
     {
       options.AddPolicy(ApiConfigKeys.AllowOrigins, builder =>
       {
-        builder.AllowAnyOrigin()
+        builder
+          .AllowAnyOrigin()
           .AllowAnyHeader()
           .WithMethods("GET", "POST", "PUT", "DELETE");
       });

@@ -8,6 +8,7 @@ using Makers.Dev.API.Options;
 
 namespace Makers.Dev.API.Installers;
 
+// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 class SwaggerInstaller : IInstaller
 {
   public void InstallServices(IServiceCollection services, IConfiguration configuration, IWebHostEnvironment env)
@@ -16,6 +17,7 @@ class SwaggerInstaller : IInstaller
     services.Configure<SwaggerOptions>(swaggerSection);
     SwaggerOptions swagger = swaggerSection.Get<SwaggerOptions>()!;
     OpenApiInfo info = swagger.Info;
+    services.AddEndpointsApiExplorer();
     services.AddSwaggerGen(options =>
     {
       options.SwaggerDoc(info.Version, info);
