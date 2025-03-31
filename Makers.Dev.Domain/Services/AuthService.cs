@@ -50,25 +50,37 @@ public class AuthService(
     return deletedUser;
   }
 
-  public IAsyncEnumerable<UserEntity> GetUsers()
+  public IAsyncEnumerable<(RoleEntity Role, UserEntity? User)> GetUsers()
   {
     var users = _userRepository.GetAll(users => users
-      .OrderBy(order => order.Firstname)
-      .ThenBy(order => order.Username))
+      .OrderBy(order => order.Username)
+      .ThenBy(order => order.Firstname)
+      .ThenBy(order => order.Lastname));
+    var roles = _roleRepository.GetAll()
+      .OrderBy(order => order.Name)
+      .ThenBy(order => order.DisplayName)
+      .GroupJoin(
+        users,
+        role => role.RoleId,
+        user => user.RoleId,
+        (role, users) => (role, users))
+      .SelectMany(
+        role => role.users.DefaultIfEmpty(),
+        (role, user) => (role.role, user))
       .ToAsyncEnumerable();
 
-    return users;
+    return roles;
   }
 
   public Task<UserEntity> FindUserById(Guid userId) => Task.FromResult(GetUserById(userId));
 
-  public async Task<UserEntity> FindUserByUsernameOrEmail(string usernameOrEmail)
+  public Task<UserEntity> FindUserByUsernameOrEmail(string usernameOrEmail)
   {
-    UserEntity user = await GetUsers()
-      .FirstOrDefaultAsync(user => StringCommonHelper.IsEquivalent(user.Username, usernameOrEmail) || StringCommonHelper.IsEquivalent(user.Email, usernameOrEmail))
+    UserEntity user = _userRepository.GetAll()
+      .FirstOrDefault(user => StringCommonHelper.IsEquivalent(user.Username, usernameOrEmail) || StringCommonHelper.IsEquivalent(user.Email, usernameOrEmail))
       ?? throw UserExceptionHelper.NotFound(usernameOrEmail);
 
-    return user;
+    return Task.FromResult(user);
   }
 
   public Task<bool> UserExists(UserEntity user) => Task.FromResult(UserExists(user, null));
