@@ -2,6 +2,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Microsoft.IdentityModel.Tokens;
 using AutoMapper;
+using Newtonsoft.Json.Linq;
 using Makers.Dev.API.Options;
 using Makers.Dev.Contracts.DTO.Auth;
 using Makers.Dev.Contracts.DTO.User;
@@ -61,8 +62,8 @@ class AuthIdentity(
         new(JwtRegisteredClaimNames.Email, user.Email),
         new(JwtRegisteredClaimNames.NameId, user.UserId.ToString()),
         new(ClaimTypes.NameIdentifier, user.Username),
-        new(ClaimTypes.UserData, UserToJson(user)),
-        new(ClaimTypes.Role, RoleToJson(role))
+        new(ClaimTypes.UserData, UserDataToJson(user, role)),
+        new(ClaimTypes.Role, role.Name)
       ]),
       Expires = DateTime.UtcNow.AddDays(_jwtOptions.ExpiresInDays),
       SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(secretKey), SecurityAlgorithms.HmacSha512Signature)
@@ -72,27 +73,24 @@ class AuthIdentity(
     return new(tokenHandler.WriteToken(token), _mapper.Map<UserResponse>(user), _mapper.Map<RoleResponse>(role));
   }
 
-  private static string UserToJson(UserEntity user)
+  private static string UserDataToJson(UserEntity user, RoleEntity role)
   {
-    string userJson = JsonHelper.ObjectToJson(
-      user,
-      user => user.UserId,
-      user => user.Password,
-      user => user.Salt,
-      user => user.Version,
-      user => user.Role,
-      user => user.BankLoans);
+    JObject jObject = JsonHelper.ToObject(new
+    {
+      user = JsonHelper.ToObject(
+        user,
+        user => user.UserId,
+        user => user.Password,
+        user => user.Salt,
+        user => user.Version,
+        user => user.Role,
+        user => user.BankLoans),
+      role = JsonHelper.ToObject(
+        role,
+        role => role.Version,
+        role => role.Users)
+    });
 
-    return userJson;
-  }
-
-  private static string RoleToJson(RoleEntity role)
-  {
-    string roleJson = JsonHelper.ObjectToJson(
-      role,
-      role => role.Version,
-      role => role.Users);
-
-    return roleJson;
+    return JsonHelper.ToJson(jObject);
   }
 }
