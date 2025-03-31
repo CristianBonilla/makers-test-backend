@@ -50,26 +50,24 @@ public class AuthService(
     return deletedUser;
   }
 
-  public IAsyncEnumerable<(RoleEntity Role, UserEntity? User)> GetUsers()
+  public IAsyncEnumerable<(RoleEntity Role, IEnumerable<UserEntity> Users)> GetUsers(Guid superUserId)
   {
-    var users = _userRepository.GetAll(users => users
-      .OrderBy(order => order.Username)
-      .ThenBy(order => order.Firstname)
-      .ThenBy(order => order.Lastname));
-    var roles = _roleRepository.GetAll()
-      .OrderBy(order => order.Name)
-      .ThenBy(order => order.DisplayName)
+    CheckUserById(superUserId);
+    CheckUserPermission(superUserId);
+    var users = _roleRepository
+      .GetAll()
       .GroupJoin(
-        users,
+        _userRepository
+          .GetAll(users => users
+            .OrderBy(order => order.Username)
+            .ThenBy(order => order.Firstname)
+            .ThenBy(order => order.Lastname)),
         role => role.RoleId,
         user => user.RoleId,
         (role, users) => (role, users))
-      .SelectMany(
-        role => role.users.DefaultIfEmpty(),
-        (role, user) => (role.role, user))
       .ToAsyncEnumerable();
 
-    return roles;
+    return users;
   }
 
   public Task<UserEntity> FindUserById(Guid userId) => Task.FromResult(GetUserById(userId));
@@ -105,6 +103,14 @@ public class AuthService(
     bool existingUser = _userRepository.Exists(user => user.UserId == userId);
     if (!existingUser)
       throw UserExceptionHelper.NotFound(userId);
+  }
+
+  private void CheckUserPermission(Guid userId)
+  {
+    UserEntity user = _userRepository.Find([userId]) ?? throw UserExceptionHelper.NotFound(userId);
+    RoleEntity role = _roleRepository.Find([user.RoleId]) ?? throw RoleExceptionHelper.NotFound(user.RoleId);
+    if (!RolesHelper.IsAdminUserById(role.RoleId))
+      throw UserExceptionHelper.BadRequest(role.Name);
   }
 
   private UserEntity GetUserById(Guid userId)

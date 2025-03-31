@@ -29,7 +29,7 @@ class AuthProfile : Profile
       .ForMember(member => member.Version, options => options.Ignore())
       .ForMember(member => member.Role, options => options.Ignore())
       .ForMember(member => member.BankLoans, options => options.Ignore());
-    CreateMap<IAsyncEnumerable<(RoleEntity Role, UserEntity? User)>, IAsyncEnumerable<UsersResult>>()
+    CreateMap<IAsyncEnumerable<(RoleEntity Role, IEnumerable<UserEntity> Users)>, IAsyncEnumerable<UsersResult>>()
       .ConvertUsing<UsersFilterConverter>();
   }
 }
