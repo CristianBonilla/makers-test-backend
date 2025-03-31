@@ -35,81 +35,82 @@ public class BankLoanController(IMapper mapper, IBankLoanService bankLoanService
     return CreatedAtAction(nameof(AddBankLoan), bankLoanResponse);
   }
 
-  [HttpPut("approve")]
+  [HttpPut("approve/{superUserId}")]
   [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(BankLoanResponse))]
   [ProducesResponseType(StatusCodes.Status400BadRequest)]
   [ProducesResponseType(StatusCodes.Status401Unauthorized)]
   [ProducesResponseType(StatusCodes.Status404NotFound)]
   [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-  public async Task<IActionResult> ApproveBankLoan([FromQuery] Guid userId, [FromQuery] Guid bankLoanId)
+  public async Task<IActionResult> ApproveBankLoan(Guid superUserId, [FromQuery] Guid userId, [FromQuery] Guid bankLoanId)
   {
-    BankLoanEntity bankLoan = await _bankLoanService.ApproveBankLoan(userId, bankLoanId);
+    BankLoanEntity bankLoan = await _bankLoanService.ApproveBankLoan(superUserId, userId, bankLoanId);
     BankLoanResponse bankLoanResponse = _mapper.Map<BankLoanResponse>(bankLoan);
 
     return Ok(bankLoanResponse);
   }
 
-  [HttpPut("reject")]
+  [HttpPut("reject/{superUserId}")]
   [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(BankLoanResponse))]
   [ProducesResponseType(StatusCodes.Status400BadRequest)]
   [ProducesResponseType(StatusCodes.Status401Unauthorized)]
   [ProducesResponseType(StatusCodes.Status404NotFound)]
   [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-  public async Task<IActionResult> RejectBankLoan([FromQuery] Guid userId, [FromQuery] Guid bankLoanId)
+  public async Task<IActionResult> RejectBankLoan(Guid superUserId, [FromQuery] Guid userId, [FromQuery] Guid bankLoanId)
   {
-    BankLoanEntity bankLoan = await _bankLoanService.RejectBankLoan(userId, bankLoanId);
+    BankLoanEntity bankLoan = await _bankLoanService.RejectBankLoan(superUserId, userId, bankLoanId);
     BankLoanResponse bankLoanResponse = _mapper.Map<BankLoanResponse>(bankLoan);
 
     return Ok(bankLoanResponse);
   }
 
-  [HttpDelete("{bankLoanId}")]
+  [HttpDelete("{userId}")]
   [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(BankLoanResponse))]
   [ProducesResponseType(StatusCodes.Status401Unauthorized)]
   [ProducesResponseType(StatusCodes.Status404NotFound)]
   [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-  public async Task<IActionResult> DeleteBankLoanById(Guid bankLoanId)
+  public async Task<IActionResult> DeleteBankLoanById(Guid userId, [FromQuery] Guid bankLoanId)
   {
-    BankLoanEntity bankLoan = await _bankLoanService.DeleteBankLoanById(bankLoanId);
+    BankLoanEntity bankLoan = await _bankLoanService.DeleteBankLoanById(userId, bankLoanId);
     BankLoanResponse bankLoanResponse = _mapper.Map<BankLoanResponse>(bankLoan);
 
     return Ok(bankLoanResponse);
   }
 
-  [HttpGet]
-  [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IAsyncEnumerable<BankLoanResponse>))]
+  [HttpGet("{userId}")]
+  [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(BankLoansResult))]
   [ProducesResponseType(StatusCodes.Status400BadRequest)]
   [ProducesResponseType(StatusCodes.Status401Unauthorized)]
   [ProducesResponseType(StatusCodes.Status404NotFound)]
   [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-  public IActionResult GetBankLoansByUserId([FromQuery] Guid userId)
+  public IActionResult GetBankLoansByUserId(Guid userId)
   {
     var bankLoans = _bankLoanService.GetBankLoansByUserId(userId);
 
-    return Ok(bankLoans);
+    return Ok(_mapper.Map<BankLoansResult>(bankLoans));
   }
 
-  [HttpGet("pending")]
-  [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IAsyncEnumerable<BankLoanResponse>))]
+  [HttpGet("pending/{superUserId}")]
+  [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IAsyncEnumerable<BankLoansResult>))]
   [ProducesResponseType(StatusCodes.Status400BadRequest)]
   [ProducesResponseType(StatusCodes.Status401Unauthorized)]
   [ProducesResponseType(StatusCodes.Status404NotFound)]
   [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-  public IActionResult GetPendingBankLoans([FromQuery] Guid userId)
+  public IActionResult GetPendingBankLoans(Guid superUserId)
   {
-    var bankLoans = _bankLoanService.GetPendingBankLoans(userId);
+    var bankLoans = _bankLoanService.GetPendingBankLoans(superUserId)
+      .Select(bankLoan => _mapper.Map<BankLoansResult>(bankLoan));
 
     return Ok(bankLoans);
   }
 
-  [HttpGet("{bankLoanId}")]
+  [HttpGet]
   [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(BankLoanResponse))]
   [ProducesResponseType(StatusCodes.Status401Unauthorized)]
   [ProducesResponseType(StatusCodes.Status404NotFound)]
   [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-  public async Task<IActionResult> FindBankLoanById(Guid bankLoanId)
+  public async Task<IActionResult> FindBankLoanById([FromQuery] Guid userId, [FromQuery] Guid bankLoanId)
   {
-    BankLoanEntity bankLoan = await _bankLoanService.FindBankLoanById(bankLoanId);
+    BankLoanEntity bankLoan = await _bankLoanService.FindBankLoanById(userId, bankLoanId);
 
     return Ok(_mapper.Map<BankLoanResponse>(bankLoan));
   }

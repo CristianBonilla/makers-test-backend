@@ -1,14 +1,15 @@
 using Makers.Dev.Domain.Entities;
+using Makers.Dev.Domain.Entities.Auth;
 
 namespace Makers.Dev.Contracts.Services;
 
 public interface IBankLoanService
 {
   Task<BankLoanEntity> AddBankLoan(BankLoanEntity bankLoan);
-  Task<BankLoanEntity> ApproveBankLoan(Guid userId, Guid bankLoanId);
-  Task<BankLoanEntity> RejectBankLoan(Guid userId, Guid bankLoanId);
-  Task<BankLoanEntity> DeleteBankLoanById(Guid bankLoanId);
-  IAsyncEnumerable<BankLoanEntity> GetBankLoansByUserId(Guid userId);
-  IAsyncEnumerable<BankLoanEntity> GetPendingBankLoans(Guid userId);
-  Task<BankLoanEntity> FindBankLoanById(Guid bankLoanId); 
+  Task<BankLoanEntity> ApproveBankLoan(Guid superUserId, Guid userId, Guid bankLoanId);
+  Task<BankLoanEntity> RejectBankLoan(Guid superUserId, Guid userId, Guid bankLoanId);
+  Task<BankLoanEntity> DeleteBankLoanById(Guid userId, Guid bankLoanId);
+  (UserEntity User, IEnumerable<BankLoanEntity> BankLoans) GetBankLoansByUserId(Guid userId);
+  IAsyncEnumerable<(UserEntity User, IEnumerable<BankLoanEntity> BankLoans)> GetPendingBankLoans(Guid superUserId);
+  Task<BankLoanEntity> FindBankLoanById(Guid userId, Guid bankLoanId);
 }
