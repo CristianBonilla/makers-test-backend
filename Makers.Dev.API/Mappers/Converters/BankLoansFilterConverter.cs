@@ -6,7 +6,7 @@ using Makers.Dev.Domain.Entities.Auth;
 
 namespace Makers.Dev.API.Mappers.Converters;
 
-public class BankLoansFilterConverter : ITypeConverter<(UserEntity User, IEnumerable<BankLoanEntity> BankLoans), BankLoansResult>
+class BankLoansFilterConverter : ITypeConverter<(UserEntity User, IEnumerable<BankLoanEntity> BankLoans), BankLoansResult>
 {
   public BankLoansResult Convert(
     (UserEntity User, IEnumerable<BankLoanEntity> BankLoans) source,

@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Makers.Dev.Contracts.Repository;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace Makers.Dev.Infrastructure.Repositories;
 
@@ -18,6 +19,10 @@ public abstract class RepositoryContext<TContext>(TContext context) : IRepositor
   {
     return _context.Set<TEntity>();
   }
+
+  public IDbContextTransaction BeginTransaction() => _context.Database.BeginTransaction();
+
+  public Task<IDbContextTransaction> BeginTransactionAsync() => _context.Database.BeginTransactionAsync();
 
   public int Save() => _context.SaveChanges();
 

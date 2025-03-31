@@ -1,4 +1,5 @@
 using System.Linq.Expressions;
+using Microsoft.EntityFrameworkCore.Storage;
 using Makers.Dev.Contracts.Services;
 using Makers.Dev.Domain.Entities;
 using Makers.Dev.Domain.Entities.Auth;
@@ -98,13 +99,25 @@ public class BankLoanService(
 
   private async Task<BankLoanEntity> BankLoanStatusChange(Guid userId, Guid bankLoanId, BankLoanStatus status)
   {
-    BankLoanEntity bankLoan = GetBankLoan(userId, bankLoanId);
-    if (bankLoan.Status != BankLoanStatus.Pending)
-      throw BankLoanExceptionHelper.BadRequest(bankLoan.Status, status);
-    bankLoan.Status = status;
-    BankLoanEntity updatedBankLoan = _bankRepository.Update(bankLoan);
-    _ = await _context.SaveAsync();
+    await using IDbContextTransaction transaction = await _context.BeginTransactionAsync();
+    try
+    {
+      BankLoanEntity bankLoan = GetBankLoan(userId, bankLoanId);
+      if (bankLoan.Status != BankLoanStatus.Pending)
+        throw BankLoanExceptionHelper.BadRequest(bankLoan.Status, status);
+      await transaction.CreateSavepointAsync("BeforeStatusChange");
+      bankLoan.Status = status;
+      BankLoanEntity updatedBankLoan = _bankRepository.Update(bankLoan);
+      _ = await _context.SaveAsync();
+      await transaction.CommitAsync();
 
-    return updatedBankLoan;
+      return updatedBankLoan;
+    }
+    catch (Exception exception)
+    {
+      await transaction.RollbackToSavepointAsync("BeforeStatusChange");
+
+      throw BankLoanExceptionHelper.Forbidden(exception);
+    }
   }
 }
