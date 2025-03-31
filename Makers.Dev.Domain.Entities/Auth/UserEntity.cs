@@ -14,7 +14,7 @@ public class UserEntity
   public bool IsActive { get; set; }
   public required byte[] Salt { get; set; }
   public DateTimeOffset Created { get; set; }
-  public byte[] Version { get; set; } = null!;
+  public uint Version { get; set; }
   public RoleEntity Role { get; set; } = null!;
   public ICollection<BankLoanEntity> BankLoans { get; set; } = [];
 }

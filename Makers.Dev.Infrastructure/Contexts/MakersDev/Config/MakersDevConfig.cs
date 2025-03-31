@@ -12,7 +12,7 @@ class BankLoanConfig(ISeedData? seedData = null) : IEntityTypeConfiguration<Bank
     builder.ToTable("BankLoan", "dbo")
       .HasKey(key => key.BankLoanId);
     builder.Property(property => property.BankLoanId)
-      .HasDefaultValueSql("NEWID()");
+      .HasDefaultValueSql("gen_random_uuid()");
     builder.Property(property => property.Status)
       .HasConversion(status => status.ToString(), status => Enum.Parse<BankLoanStatus>(status))
       .IsRequired();
@@ -22,7 +22,7 @@ class BankLoanConfig(ISeedData? seedData = null) : IEntityTypeConfiguration<Bank
     builder.Property(property => property.PaymentTerm)
       .IsRequired();
     builder.Property(property => property.Created)
-      .HasDefaultValueSql("GETUTCDATE()");
+      .HasDefaultValueSql("now()");
     builder.Property(property => property.Version)
       .IsRowVersion();
     builder.HasOne(one => one.User)

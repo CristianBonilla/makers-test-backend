@@ -18,13 +18,13 @@ public partial class AddedBankLoanEntity : Migration
         schema: "dbo",
         columns: table => new
         {
-          BankLoanId = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "NEWID()"),
-          UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-          Status = table.Column<string>(type: "nvarchar(450)", nullable: false),
-          Amount = table.Column<decimal>(type: "decimal(14,2)", precision: 14, scale: 2, nullable: false),
-          PaymentTerm = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
-          Created = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false, defaultValueSql: "GETUTCDATE()"),
-          Version = table.Column<byte[]>(type: "rowversion", rowVersion: true, nullable: false)
+          BankLoanId = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+          UserId = table.Column<Guid>(type: "uuid", nullable: false),
+          Status = table.Column<string>(type: "text", nullable: false),
+          Amount = table.Column<decimal>(type: "numeric(14,2)", precision: 14, scale: 2, nullable: false),
+          PaymentTerm = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+          Created = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false, defaultValueSql: "now()"),
+          xmin = table.Column<uint>(type: "xid", rowVersion: true, nullable: false)
         },
         constraints: table =>
         {

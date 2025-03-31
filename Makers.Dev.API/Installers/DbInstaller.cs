@@ -11,7 +11,7 @@ class DbInstaller : IInstaller
   public void InstallServices(IServiceCollection services, IConfiguration configuration, IWebHostEnvironment env)
   {
     string connectionString = GetConnectionString(configuration);
-    services.AddDbContextPool<MakersDevContext>(options => options.UseSqlServer(connectionString));
+    services.AddDbContextPool<MakersDevContext>(options => options.UseNpgsql(connectionString));
   }
 
   private static string GetConnectionString(IConfiguration configuration)

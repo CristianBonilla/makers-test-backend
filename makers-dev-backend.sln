@@ -31,7 +31,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Scripts", "Scripts", "{CF7380B7-B575-4DD8-BEBF-32204D9D7668}"
 	ProjectSection(SolutionItems) = preProject
 		Scripts\1.0. makers-dev-script.sql = Scripts\1.0. makers-dev-script.sql
-		Scripts\1.1. makers-dev-addeduserentity-script.sql = Scripts\1.1. makers-dev-addeduserentity-script.sql
+		Scripts\1.1. makers-dev-addedroleentity-script.sql = Scripts\1.1. makers-dev-addedroleentity-script.sql
 		Scripts\1.2. makers-dev-addedbankloanentity-script.sql = Scripts\1.2. makers-dev-addedbankloanentity-script.sql
 	EndProjectSection
 EndProject

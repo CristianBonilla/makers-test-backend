@@ -10,6 +10,6 @@ public class BankLoanEntity
   public required decimal Amount { get; set; }
   public required DateTimeOffset PaymentTerm { get; set; }
   public DateTimeOffset Created { get; set; }
-  public byte[] Version { get; set; } = null!;
+  public uint Version { get; set; }
   public UserEntity User { get; set; } = null!;
 }

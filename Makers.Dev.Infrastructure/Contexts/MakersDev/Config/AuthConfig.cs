@@ -12,7 +12,7 @@ class RoleConfig(ISeedData? seedData = null) : IEntityTypeConfiguration<RoleEnti
     builder.ToTable("Role", "dbo")
       .HasKey(key => key.RoleId);
     builder.Property(property => property.RoleId)
-      .HasDefaultValueSql("NEWID()");
+      .HasDefaultValueSql("gen_random_uuid()");
     builder.Property(property => property.Name)
       .HasMaxLength(30)
       .IsUnicode(false)
@@ -22,7 +22,7 @@ class RoleConfig(ISeedData? seedData = null) : IEntityTypeConfiguration<RoleEnti
       .IsUnicode(false)
       .IsRequired();
     builder.Property(property => property.Created)
-      .HasDefaultValueSql("GETUTCDATE()");
+      .HasDefaultValueSql("now()");
     builder.Property(property => property.Version)
       .IsRowVersion();
     builder.HasMany(many => many.Users)
@@ -43,7 +43,7 @@ class UserConfig(ISeedData? seedData = null) : IEntityTypeConfiguration<UserEnti
     builder.ToTable("User", "dbo")
       .HasKey(key => key.UserId);
     builder.Property(property => property.UserId)
-      .HasDefaultValueSql("NEWID()");
+      .HasDefaultValueSql("gen_random_uuid()");
     builder.Property(property => property.DocumentNumber)
       .HasMaxLength(20)
       .IsUnicode(false)
@@ -57,7 +57,7 @@ class UserConfig(ISeedData? seedData = null) : IEntityTypeConfiguration<UserEnti
       .IsUnicode(false)
       .IsRequired();
     builder.Property(property => property.Password)
-      .HasColumnType("varchar(max)")
+      .HasColumnType("varchar")
       .IsRequired();
     builder.Property(property => property.Email)
       .HasMaxLength(100)
@@ -76,7 +76,7 @@ class UserConfig(ISeedData? seedData = null) : IEntityTypeConfiguration<UserEnti
     builder.Property(property => property.Salt)
       .IsRequired();
     builder.Property(property => property.Created)
-      .HasDefaultValueSql("GETUTCDATE()");
+      .HasDefaultValueSql("now()");
     builder.Property(property => property.Version)
       .IsRowVersion();
     builder.HasOne(one => one.Role)
