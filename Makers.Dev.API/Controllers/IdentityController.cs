@@ -9,7 +9,6 @@ using Makers.Dev.Contracts.DTO.User;
 using Makers.Dev.Contracts.Identity;
 using Makers.Dev.Contracts.Services;
 using Makers.Dev.Domain.Entities.Auth;
-using Makers.Dev.Contracts.DTO.Role;
 
 namespace Makers.Dev.API.Controllers;
 
@@ -77,14 +76,14 @@ public class IdentityController(IMapper mapper, IAuthService authService, IAuthI
   }
 
   [HttpGet]
-  [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IAsyncEnumerable<RoleResult>))]
+  [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IAsyncEnumerable<UsersResult>))]
   [ProducesResponseType(StatusCodes.Status401Unauthorized)]
   [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-  public IAsyncEnumerable<RoleResult> GetUsers()
+  public IAsyncEnumerable<UsersResult> GetUsers()
   {
     var users = _authService.GetUsers();
 
-    return _mapper.Map<IAsyncEnumerable<RoleResult>>(users);
+    return _mapper.Map<IAsyncEnumerable<UsersResult>>(users);
   }
 
   [HttpGet("{userId:guid}")]
