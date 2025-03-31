@@ -2,7 +2,6 @@ using System.Linq.Expressions;
 using Makers.Dev.Contracts.Services;
 using Makers.Dev.Domain.Entities;
 using Makers.Dev.Domain.Entities.Auth;
-using Makers.Dev.Domain.Helpers;
 using Makers.Dev.Domain.Helpers.Exceptions;
 using Makers.Dev.Infrastructure.Repositories.Auth.Interfaces;
 using Makers.Dev.Infrastructure.Repositories.MakersDev.Interfaces;
@@ -12,13 +11,11 @@ namespace Makers.Dev.Domain.Services;
 public class BankLoanService(
   IMakersDevRepositoryContext context,
   IBankLoanRepository bankLoanRepository,
-  IUserRepository userRepository,
-  IRoleRepository roleRepository) : IBankLoanService
+  IUserRepository userRepository) : IBankLoanService
 {
   readonly IMakersDevRepositoryContext _context = context;
   readonly IBankLoanRepository _bankRepository = bankLoanRepository;
   readonly IUserRepository _userRepository = userRepository;
-  readonly IRoleRepository _roleRepository = roleRepository;
 
   public async Task<BankLoanEntity> AddBankLoan(BankLoanEntity bankLoan)
   {
@@ -30,9 +27,9 @@ public class BankLoanService(
     return addedBankLoan;
   }
 
-  public Task<BankLoanEntity> ApproveBankLoan(Guid superUserId, Guid userId, Guid bankLoanId) => BankLoanStatusChange(superUserId, userId, bankLoanId, BankLoanStatus.Approved);
+  public Task<BankLoanEntity> ApproveBankLoan(Guid userId, Guid bankLoanId) => BankLoanStatusChange(userId, bankLoanId, BankLoanStatus.Approved);
 
-  public Task<BankLoanEntity> RejectBankLoan(Guid superUserId, Guid userId, Guid bankLoanId) => BankLoanStatusChange(superUserId, userId, bankLoanId, BankLoanStatus.Rejected);
+  public Task<BankLoanEntity> RejectBankLoan(Guid userId, Guid bankLoanId) => BankLoanStatusChange(userId, bankLoanId, BankLoanStatus.Rejected);
 
   public async Task<BankLoanEntity> DeleteBankLoanById(Guid userId, Guid bankLoanId)
   {
@@ -50,10 +47,8 @@ public class BankLoanService(
     return (user, GetBankLoans(bankLoan => bankLoan.UserId == userId));
   }
 
-  public IAsyncEnumerable<(UserEntity User, IEnumerable<BankLoanEntity> BankLoans)> GetPendingBankLoans(Guid superUserId)
+  public IAsyncEnumerable<(UserEntity User, IEnumerable<BankLoanEntity> BankLoans)> GetPendingBankLoans()
   {
-    CheckUserById(superUserId);
-    CheckUserPermission(superUserId);
     var bankLoans = _userRepository
       .GetAll()
       .GroupJoin(
@@ -74,14 +69,6 @@ public class BankLoanService(
     bool existingUser = _userRepository.Exists(user => user.UserId == userId);
     if (!existingUser)
       throw UserExceptionHelper.NotFound(userId);
-  }
-
-  private void CheckUserPermission(Guid userId)
-  {
-    UserEntity user = _userRepository.Find([userId]) ?? throw UserExceptionHelper.NotFound(userId);
-    RoleEntity role = _roleRepository.Find([user.RoleId]) ?? throw RoleExceptionHelper.NotFound(user.RoleId);
-    if (!RolesHelper.IsAdminUserById(role.RoleId))
-      throw UserExceptionHelper.BadRequest(role.Name);
   }
 
   private BankLoanEntity GetBankLoan(Guid userId, Guid bankLoanId)
@@ -109,10 +96,8 @@ public class BankLoanService(
     return bankLoans;
   }
 
-  private async Task<BankLoanEntity> BankLoanStatusChange(Guid superUserId, Guid userId, Guid bankLoanId, BankLoanStatus status)
+  private async Task<BankLoanEntity> BankLoanStatusChange(Guid userId, Guid bankLoanId, BankLoanStatus status)
   {
-    CheckUserById(superUserId);
-    CheckUserPermission(superUserId);
     BankLoanEntity bankLoan = GetBankLoan(userId, bankLoanId);
     if (bankLoan.Status != BankLoanStatus.Pending)
       throw BankLoanExceptionHelper.BadRequest(bankLoan.Status, status);

@@ -75,23 +75,24 @@ public class IdentityController(IMapper mapper, IAuthService authService, IAuthI
     return Ok(_mapper.Map<UserResponse>(user));
   }
 
-  [HttpGet("{superUserId:guid}")]
+  [Authorize(Policy = "AdminOnly")]
+  [HttpGet]
   [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IAsyncEnumerable<UsersResult>))]
   [ProducesResponseType(StatusCodes.Status401Unauthorized)]
   [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-  public IAsyncEnumerable<UsersResult> GetUsers(Guid superUserId)
+  public IAsyncEnumerable<UsersResult> GetUsers()
   {
-    var users = _authService.GetUsers(superUserId);
+    var users = _authService.GetUsers();
 
     return _mapper.Map<IAsyncEnumerable<UsersResult>>(users);
   }
 
-  [HttpGet]
+  [HttpGet("{userId:guid}")]
   [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UserResponse))]
   [ProducesResponseType(StatusCodes.Status401Unauthorized)]
   [ProducesResponseType(StatusCodes.Status404NotFound)]
   [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-  public async Task<IActionResult> FindUserById([FromQuery] Guid userId)
+  public async Task<IActionResult> FindUserById(Guid userId)
   {
     UserEntity user = await _authService.FindUserById(userId);
 

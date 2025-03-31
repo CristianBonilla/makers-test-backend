@@ -50,10 +50,8 @@ public class AuthService(
     return deletedUser;
   }
 
-  public IAsyncEnumerable<(RoleEntity Role, IEnumerable<UserEntity> Users)> GetUsers(Guid superUserId)
+  public IAsyncEnumerable<(RoleEntity Role, IEnumerable<UserEntity> Users)> GetUsers()
   {
-    CheckUserById(superUserId);
-    CheckUserPermission(superUserId);
     var users = _roleRepository
       .GetAll()
       .GroupJoin(
@@ -105,14 +103,6 @@ public class AuthService(
     bool existingUser = _userRepository.Exists(user => user.UserId == userId);
     if (!existingUser)
       throw UserExceptionHelper.NotFound(userId);
-  }
-
-  private void CheckUserPermission(Guid userId)
-  {
-    UserEntity user = _userRepository.Find([userId]) ?? throw UserExceptionHelper.NotFound(userId);
-    RoleEntity role = _roleRepository.Find([user.RoleId]) ?? throw RoleExceptionHelper.NotFound(user.RoleId);
-    if (!RolesHelper.IsAdminUserById(role.RoleId))
-      throw UserExceptionHelper.BadRequest(role.Name);
   }
 
   private UserEntity GetUserById(Guid userId)
