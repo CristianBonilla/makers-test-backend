@@ -29,40 +29,15 @@ public class BankLoanService(
     return addedBankLoan;
   }
 
-  public async Task<BankLoanEntity> UpdateBankLoan(BankLoanEntity bankLoan)
+  public Task<BankLoanEntity> ApproveBankLoan(Guid bankLoanId) => BankLoanStatusChange(bankLoanId, BankLoanStatus.Approved);
+
+  public Task<BankLoanEntity> RejectBankLoan(Guid bankLoanId) => BankLoanStatusChange(bankLoanId, BankLoanStatus.Rejected);
+
+  public IAsyncEnumerable<BankLoanEntity> GetPendingBankLoans(Guid userId)
   {
-    CheckBankLoanById(bankLoan.BankLoanId);
-    CheckUserPermission(bankLoan.UserId);
-    BankLoanEntity updatedBankLoan = _bankRepository.Update(bankLoan);
-    _ = await _context.SaveAsync();
-
-    return updatedBankLoan;
-  }
-
-  public async Task<BankLoanEntity> UpdateBankLoanStatus(Guid bankLoanId, BankLoanStatus bankLoanStatus)
-  {
-    BankLoanEntity bankLoan = GetBankLoanById(bankLoanId);
-    CheckUserPermission(bankLoan.UserId);
-    bankLoan.Status = bankLoanStatus;
-    BankLoanEntity updatedBankLoan = _bankRepository.Update(bankLoan);
-    _ = await _context.SaveAsync();
-
-    return updatedBankLoan;
-  }
-
-  public async Task<BankLoanEntity> DeleteBankLoanById(Guid bankLoanId)
-  {
-    BankLoanEntity bankLoan = GetBankLoanById(bankLoanId);
-    CheckUserPermission(bankLoan.UserId);
-    BankLoanEntity deletedBankLoan = _bankRepository.Delete(bankLoan);
-    _ = await _context.SaveAsync();
-
-    return deletedBankLoan;
-  }
-
-  public IAsyncEnumerable<BankLoanEntity> GetBankLoans()
-  {
-    var bankLoans = _bankRepository.GetAll(bankLoan => bankLoan
+    CheckUserById(userId);
+    CheckUserPermission(userId);
+    var bankLoans = _bankRepository.GetByFilter(bankLoan => bankLoan.Status == BankLoanStatus.Pending, bankLoan => bankLoan
       .OrderByDescending(order => order.PaymentTerm)
       .OrderBy(order => order.Status)
       .ThenBy(order => order.Amount))
@@ -71,10 +46,10 @@ public class BankLoanService(
     return bankLoans;
   }
 
-  public IAsyncEnumerable<BankLoanEntity> GetBanLoansByStatusByUserId(Guid userId, BankLoanStatus bankLoanStatus)
+  public IAsyncEnumerable<BankLoanEntity> GetBankLoansByUserId(Guid userId)
   {
     CheckUserById(userId);
-    var bankLoans = _bankRepository.GetByFilter(bankLoan => bankLoan.UserId == userId && bankLoan.Status == bankLoanStatus, bankLoan => bankLoan
+    var bankLoans = _bankRepository.GetByFilter(bankLoan => bankLoan.UserId == userId, bankLoan => bankLoan
       .OrderByDescending(order => order.PaymentTerm)
       .OrderBy(order => order.Status)
       .ThenBy(order => order.Amount))
@@ -85,13 +60,6 @@ public class BankLoanService(
 
   public Task<BankLoanEntity> FindBankLoanById(Guid bankLoanId) => Task.FromResult(GetBankLoanById(bankLoanId));
 
-  private void CheckBankLoanById(Guid bankLoanId)
-  {
-    bool existingBankLoan = _bankRepository.Exists(bankLoan => bankLoan.BankLoanId == bankLoanId);
-    if (!existingBankLoan)
-      throw BankLoanExceptionHelper.NotFound(bankLoanId);
-  }
-
   private void CheckUserById(Guid userId)
   {
     bool existingUser = _userRepository.Exists(user => user.UserId == userId);
@@ -101,8 +69,8 @@ public class BankLoanService(
 
   private void CheckUserPermission(Guid userId)
   {
-    Guid roleId = GetRoleIdByUserId(userId);
-    RoleEntity role = GetRoleById(roleId);
+    UserEntity user = _userRepository.Find([userId]) ?? throw UserExceptionHelper.NotFound(userId);
+    RoleEntity role = _roleRepository.Find([user.RoleId]) ?? throw RoleExceptionHelper.NotFound(user.RoleId);
     if (!RolesHelper.IsAdminUserById(role.RoleId))
       throw UserExceptionHelper.BadRequest(role.Name);
   }
@@ -114,17 +82,16 @@ public class BankLoanService(
     return bankLoan;
   }
 
-  private RoleEntity GetRoleById(Guid roleId)
+  private async Task<BankLoanEntity> BankLoanStatusChange(Guid bankLoanId, BankLoanStatus status)
   {
-    RoleEntity role = _roleRepository.Find([roleId]) ?? throw RoleExceptionHelper.NotFound(roleId);
+    BankLoanEntity bankLoan = GetBankLoanById(bankLoanId);
+    CheckUserPermission(bankLoan.UserId);
+    if (bankLoan.Status != BankLoanStatus.Pending)
+      throw BankLoanExceptionHelper.BadRequest(bankLoan.Status, status);
+    bankLoan.Status = status;
+    BankLoanEntity updatedBankLoan = _bankRepository.Update(bankLoan);
+    _ = await _context.SaveAsync();
 
-    return role;
-  }
-
-  private Guid GetRoleIdByUserId(Guid userId)
-  {
-    UserEntity user = _userRepository.Find([userId]) ?? throw UserExceptionHelper.NotFound(userId);
-
-    return user.RoleId;
+    return updatedBankLoan;
   }
 }
