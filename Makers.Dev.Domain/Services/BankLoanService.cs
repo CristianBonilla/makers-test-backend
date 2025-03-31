@@ -29,15 +29,23 @@ public class BankLoanService(
     return addedBankLoan;
   }
 
-  public Task<BankLoanEntity> ApproveBankLoan(Guid bankLoanId) => BankLoanStatusChange(bankLoanId, BankLoanStatus.Approved);
+  public Task<BankLoanEntity> ApproveBankLoan(Guid userId, Guid bankLoanId) => BankLoanStatusChange(userId, bankLoanId, BankLoanStatus.Approved);
 
-  public Task<BankLoanEntity> RejectBankLoan(Guid bankLoanId) => BankLoanStatusChange(bankLoanId, BankLoanStatus.Rejected);
+  public Task<BankLoanEntity> RejectBankLoan(Guid userId, Guid bankLoanId) => BankLoanStatusChange(userId, bankLoanId, BankLoanStatus.Rejected);
 
-  public IAsyncEnumerable<BankLoanEntity> GetPendingBankLoans(Guid userId)
+  public async Task<BankLoanEntity> DeleteBankLoanById(Guid bankLoanId)
+  {
+    BankLoanEntity bankLoan = GetBankLoanById(bankLoanId);
+    BankLoanEntity deletedBankLoan = _bankRepository.Delete(bankLoan);
+    _ = await _context.SaveAsync();
+
+    return deletedBankLoan;
+  }
+
+  public IAsyncEnumerable<BankLoanEntity> GetBankLoansByUserId(Guid userId)
   {
     CheckUserById(userId);
-    CheckUserPermission(userId);
-    var bankLoans = _bankRepository.GetByFilter(bankLoan => bankLoan.Status == BankLoanStatus.Pending, bankLoan => bankLoan
+    var bankLoans = _bankRepository.GetByFilter(bankLoan => bankLoan.UserId == userId, bankLoan => bankLoan
       .OrderByDescending(order => order.PaymentTerm)
       .OrderBy(order => order.Status)
       .ThenBy(order => order.Amount))
@@ -46,10 +54,11 @@ public class BankLoanService(
     return bankLoans;
   }
 
-  public IAsyncEnumerable<BankLoanEntity> GetBankLoansByUserId(Guid userId)
+  public IAsyncEnumerable<BankLoanEntity> GetPendingBankLoans(Guid userId)
   {
     CheckUserById(userId);
-    var bankLoans = _bankRepository.GetByFilter(bankLoan => bankLoan.UserId == userId, bankLoan => bankLoan
+    CheckUserPermission(userId);
+    var bankLoans = _bankRepository.GetByFilter(bankLoan => bankLoan.Status == BankLoanStatus.Pending, bankLoan => bankLoan
       .OrderByDescending(order => order.PaymentTerm)
       .OrderBy(order => order.Status)
       .ThenBy(order => order.Amount))
@@ -82,9 +91,17 @@ public class BankLoanService(
     return bankLoan;
   }
 
-  private async Task<BankLoanEntity> BankLoanStatusChange(Guid bankLoanId, BankLoanStatus status)
+  private BankLoanEntity GetBankLoan(Guid userId, Guid bankLoanId)
   {
-    BankLoanEntity bankLoan = GetBankLoanById(bankLoanId);
+    BankLoanEntity bankLoan = _bankRepository.Find(bankLoan => bankLoan.UserId == bankLoan.UserId && bankLoan.BankLoanId == bankLoanId)
+      ?? throw BankLoanExceptionHelper.NotFound(userId, bankLoanId);
+
+    return bankLoan;
+  }
+
+  private async Task<BankLoanEntity> BankLoanStatusChange(Guid userId, Guid bankLoanId, BankLoanStatus status)
+  {
+    BankLoanEntity bankLoan = GetBankLoan(userId, bankLoanId);
     CheckUserPermission(bankLoan.UserId);
     if (bankLoan.Status != BankLoanStatus.Pending)
       throw BankLoanExceptionHelper.BadRequest(bankLoan.Status, status);
